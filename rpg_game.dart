@@ -1,28 +1,70 @@
 /*
-커밋 테스트2
+파일로부터 데이터 읽어오기
+  캐릭터 데이터
+  몬스터 데이터
+사용자 입력 받기
 
-1. game클래스
-
-2. 캐릭터 클래스
-
-3. 몬스터 클래스 
-각 클래스 별 메서드 구현
+게임 종료 후 결과 파일에 저장하기
 */
 
-//기능 구현
 /*
-1. 파일로부터 데이터 읽어오기
-  
-    
-2. 사용자로부터 캐릭터 입력받기
-
-3.게임 종료 후 결과 파일에 저장하기
-
+1. game클래스
+2. 캐릭터 클래스
+3. 몬스터 클래스 
+각 클래스 별 메서드 구현
 */
 
 // main 함수
 
 import 'dart:io';
+
+void loadCharacterStats() {
+  try {
+    final file = File('characters.txt');
+    final contents = file.readAsStringSync();
+    final stats = contents.split(',');
+    if (stats.length != 3) throw FormatException('Invalid character data');
+
+    int health = int.parse(stats[0]);
+    int attack = int.parse(stats[1]);
+    int defense = int.parse(stats[2]);
+
+    String name = getCharacterName();
+    character = Character(name, health, attack, defense);
+  } catch (e) {
+    print('캐릭터 데이터를 불러오는 데 실패했습니다: $e');
+    exit(1);
+  }
+}
+
+//캐릭터 이름 입력받기
+String getCharacterName() {}
+
+// 몬스터 데이터를 로드하는 함수
+List<Monster> loadMonsters() {
+  List<Monster> monsters = [];
+  try {
+    final file = File('monsters.txt');
+    final lines = file.readAsLinesSync();
+
+    for (var line in lines) {
+      final stats = line.split(',');
+
+      if (stats.length != 3) continue;
+
+      String name = stats[0];
+      int health = int.parse(stats[1]);
+      int maxAttack = int.parse(stats[2]);
+      int armor = 0;
+
+      monsters.add(Monster(name, health, maxAttack, armor));
+    }
+  } catch (e) {
+    print('몬스터 데이터를 불러오는 데 실패했습니다: $e');
+    exit(1);
+  }
+  return monsters;
+}
 
 //게임 클래스 정의
 class Game {
@@ -65,17 +107,12 @@ class Character {
 }
 
 class Monster {
-  String monsterName;
-  int monsterHealth;
-  int monsterAttackMax;
-  int monsterAromr;
+  String name;
+  int health;
+  int maxAttack;
+  int aromr;
 
-  Monster(
-    this.monsterName,
-    this.monsterHealth,
-    this.monsterAttackMax,
-    this.monsterAromr,
-  );
+  Monster(this.name, this.health, this.maxAttack, this.aromr);
 
   void attackCharacter(Character character) {
     //공격 메서드
