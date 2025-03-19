@@ -1,5 +1,5 @@
 /*
-
+커밋 테스트
 1. game클래스
 
 2. 캐릭터 클래스
@@ -45,6 +45,7 @@ class Game {
 class Character {
   String name;
   int health;
+
   int attack;
   int aromr;
 
