@@ -115,19 +115,30 @@ class Character {
 }
 
 class Monster {
+  //몬스터 속성
   String name;
   int health;
-  int maxAttack;
-  int aromr;
+  int
+  maxAttack; //몬스터의 공격력은 캐릭터의 방어력보다 작을 수 없음. 랜덤으로 지정하여 캐릭터의 방어력과 랜덤 값 중 최댓값으로 설정.
+  int aromr = 0; //몬스터 방어력 = 0
 
   Monster(this.name, this.health, this.maxAttack, this.aromr);
 
   void attackCharacter(Character character) {
     //공격 메서드
+    maxAttack = max(
+      Random().nextInt(maxAttack),
+      character.aromr,
+    ); //몬스터 공격력과 캐릭터 방어력 중 높은 값
+
+    int damage = max(maxAttack - character.aromr, 0);
+    character.health -= damage;
+    print('$name이 ${character.name}에게 $damage의 피해를 입혔습니다');
   }
 
   void showStatus() {
-    //상태를 출력하는 메서드
+    //상태를 출력하는 메서드(이름 - 체력,공격력)
+    print('$name - 체력: $health, 공격력: $maxAttack');
   }
 }
 
