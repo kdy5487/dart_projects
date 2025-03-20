@@ -19,7 +19,7 @@
 import 'dart:io';
 import 'dart:math';
 
-void loadCharacterStats() {
+Character loadCharacterStats() {
   try {
     final file = File('characters.txt');
     final contents = file.readAsStringSync();
@@ -31,35 +31,15 @@ void loadCharacterStats() {
     int defense = int.parse(stats[2]);
 
     String name = getCharacterName();
-    character = Character(name, health, attack, defense);
+    return Character(name, health, attack, defense);
   } catch (e) {
     print('캐릭터 데이터를 불러오는 데 실패했습니다: $e');
     exit(1);
   }
 }
 
-//캐릭터 이름 입력받기
-String getCharacterName() {
-  while (true) {
-    //리턴낼 때까지 반복
-
-    print('캐릭터의 이름을 입력하세요');
-    String? name = stdin.readLineSync(); //사용자의 입력을 받아 name으로
-    if (name == null) {
-      //null값일시에(공백)
-      print('이름을 다시 입력하세요');
-      continue; //공백아닐 때 까지 다시 반복
-    } else if (!RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(name)) {
-      //정규표현식으로 특수문자와 숫자 포함하지않게함.
-      print('이름에는 숫자나 특수문자를 포함할 수 없습니다');
-      continue; //숫자나 특수문자 포함안할떄까지 반복
-    }
-    return name;
-  }
-}
-
 // 몬스터 데이터를 로드하는 함수
-List<Monster> loadMonsters() {
+List<Monster> loadMonstersStats() {
   List<Monster> monsters = [];
   try {
     final file = File('monsters.txt');
@@ -82,6 +62,26 @@ List<Monster> loadMonsters() {
     exit(1);
   }
   return monsters;
+}
+
+//캐릭터 이름 입력받기
+String getCharacterName() {
+  while (true) {
+    //리턴낼 때까지 반복
+
+    print('캐릭터의 이름을 입력하세요');
+    String? name = stdin.readLineSync(); //사용자의 입력을 받아 name으로
+    if (name == null) {
+      //null값일시에(공백)
+      print('이름을 다시 입력하세요');
+      continue; //공백아닐 때 까지 다시 반복
+    } else if (!RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(name)) {
+      //정규표현식으로 특수문자와 숫자 포함하지않게함.
+      print('이름에는 숫자나 특수문자를 포함할 수 없습니다');
+      continue; //숫자나 특수문자 포함안할떄까지 반복
+    }
+    return name;
+  }
 }
 
 class Character {
@@ -126,11 +126,8 @@ class Monster {
 
   void attackCharacter(Character character) {
     //공격 메서드
-    maxAttack = max(
-      Random().nextInt(maxAttack),
-      character.aromr,
-    ); //몬스터 공격력과 캐릭터 방어력 중 높은 값
-
+    maxAttack = max(Random().nextInt(maxAttack), character.aromr);
+    //몬스터 공격력과 캐릭터 방어력 중 높은 값
     int damage = max(maxAttack - character.aromr, 0);
     character.health -= damage;
     print('$name이 ${character.name}에게 $damage의 피해를 입혔습니다');
@@ -145,20 +142,86 @@ class Monster {
 //게임 클래스 정의
 class Game {
   //속성 정의
-  String Character; //캐릭터
-  List<Monster> monster = []; //몬스터
-  int monsterCount; //물리친 몬스터 개수
+  Character character; //캐릭터클래스의 매개변수 캐릭터 생성
+  List<Monster> monsters = []; //몬스터와서 몬스터즈 리스트 생성
+  int monsterCount = 0; //물리친 몬스터 개수, 처음엔 0
 
-  Game(this.Character, this.monster, this.monsterCount); //매개변수 생성자, this 필수
+  Game(this.character, this.monsters); //매개변수 생성자
 
   //반복문을 사용하여 몬스터를 랜덤으로 뽑아 순회하면서 대결
   void startGame() {
     print('게임을 시작합니다!');
-    //캐릭터이름 - 체력 공격력 방어력  출
+    //몬스터 등장 반복
+    while (character.health > 0 && monsterCount < monsters.length) {
+      //게임 종료 조건과 반대(캐릭터의 체력이 0초과, 몬스터가 남아있는경우)
+      Monster monster = getRandomMonster();
+      print('새로운 몬스터 $monsters.name이(가) 등장했습니다.');
+
+      battle(monster); //몬스터와 대결
+
+      if (monsterCount == monsters.length) {
+        //대결이 끝날 떄 몬스터를 다 잡을시 승리
+        print('축하합니다. 모든 몬스터를 물리쳤습니다!'); //승리멘트
+        break; //승리해서 게임종료
+      }
+
+      if (character.health > 0) {
+        //체력 0 이하시 게임 종료
+        print('당신은 죽었습니다.'); //패배멘트
+        break; //죽어서 게임종료
+      }
+      // 다음 전투 여부 확인
+      print("\n다음 몬스터와 대결하시겠습니까? (y/n)");
+      String? choice = stdin.readLineSync();
+      if (choice?.toLowerCase() == 'y') {
+        continue; //배틀이 한번끝나고 대결을 원할시
+      }
+      if (choice?.toLowerCase() == 'n') {
+        print("게임을 종료합니다."); //도망
+        break; //배틀의사가 없을시 게임종료
+      }
+    }
   }
 
-  void battle() {}
-  void getRandomMonster() {}
+  void battle(Monster monster) {
+    while (character.health > 0 && monster.health > 0) {
+      print('1. 공격 2. 방어');
+      String? input = stdin.readLineSync(); //공격 방어 사용자 입력
+
+      if (input == '1') {
+        character.attackMonster(monster);
+      } else if (input == '2') {
+        character.defend();
+      } else {
+        print('해당 입력은 등록되지않았습니다. 다시 입력해주세요.');
+        continue; //1,2 외 입력시 다시 입력
+      }
+      //공격,방어 후 상태창 출력
+      character.showStatus(); //캐릭터 상태창
+      monster.showStatus(); //몬스터 상태창
+    }
+
+    if (character.health > 0) {
+      //캐릭터가 살아있고 몬스터의 체력이 0이하가 된경우
+      print("${monster.name}을(를) 물리쳤습니다!");
+      monsterCount++; //잡은몬스터 카운팅
+      monsters.remove(monster); // 처치한 몬스터 제거
+    }
+  }
+
+  Monster getRandomMonster() {
+    return monsters[Random().nextInt(monsters.length)];
+  }
 }
 
-void main() {}
+void main() {
+  Character player = loadCharacterStats();
+  List<Monster> monsterList = loadMonstersStats();
+
+  if (monsterList.isEmpty) {
+    print('몬스터가 존재하지않습니다.');
+    return;
+  }
+  Game game = Game(player, monsterList);
+  game.startGame();
+}
