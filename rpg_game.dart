@@ -93,13 +93,23 @@ class Character {
   int armor;
 
   bool itemUsed = false; // 아이템 사용 여부
-  Character(this.name, this.health, this.attack, this.armor);
+
+  int originalAttack; // 아이템 사용후 원래 공격력으로 돌아가기위함.
+
+  Character(this.name, this.health, this.attack, this.armor)
+    : originalAttack = attack; //생성자에 원래 공격력 저장함.
 
   void attackMonster(Monster monster) {
     //공격 매서드
     int damage = max(attack - monster.armor, 0); //캐릭터가 입히는 대미지== 공격력-몬스터방어력(0)
-    monster.health -= damage;
+    monster.health = max(0, monster.health - damage); //체력이 0미만으로 가는 현상을 막기위함
     print('$name이 ${monster.name}에게 $damage의 피해를 입혔습니다.');
+
+    if (itemUsed) {
+      //몬스터 때린 후 itemUsed를 통해 아이템을 사용했는지 판별.
+      attack = originalAttack; //아이템 효과가 끝나면 원래 공격력으로 복구
+      print('아이템 효과가 끝났습니다. 공격력이 원래대로 돌아왔습니다: $attack');
+    }
   }
 
   void defend(Monster monster) {
@@ -117,13 +127,15 @@ class Character {
 
   //전투 시 캐릭터의 아이템 사용 기능 추가
   void useItem() {
-    if (!itemUsed) {
-      //아이템 사용안했다면
+    if (itemUsed) {
+      //아이템을 단 한번이라도 사용했다면
+      print('이미 아이템을 사용했습니다!');
+      return; //메서드 종료
+    } else {
+      // 아이템을 사용안했다면
       attack *= 2;
       print('특수 아이템을 사용했습니다. 이번 턴 공격력 증가: $attack');
       itemUsed = true; //한번사용시 사용불가능으로
-    } else {
-      print('이미 아이템을 사용했습니다!');
     }
   }
 }
@@ -145,10 +157,11 @@ class Monster {
 
   void attackCharacter(Character character) {
     //공격 메서드
-    maxAttack = max(Random().nextInt(maxAttack), character.armor);
+    maxAttack = max(Random().nextInt(maxAttack) + 1, character.armor);
     //몬스터 공격력과 캐릭터 방어력 중 높은 값
-    int damage = max(maxAttack - character.armor, 0);
-    character.health -= damage;
+    int damage = max(maxAttack - character.armor, 1); //최소 데미지 1 보장.
+
+    character.health = max(0, character.health - damage); //체력이 0미만으로 되지않기위함,
     print('$name이 ${character.name}에게 $damage의 피해를 입혔습니다');
   }
 
@@ -177,13 +190,20 @@ class Game {
 
   //반복문을 사용하여 몬스터를 랜덤으로 뽑아 순회하면서 대결
   void startGame() {
-    print('게임을 시작합니다!');
+    print('\n게임을 시작합니다!');
+
+    //출력 이쁘게 만들기
+    print('----------- 캐릭터 정보 -----------');
+    character.showStatus(); // 처음에 플레이어 스탯 출력
+    print('-----------------------------------');
     //몬스터 등장 반복
     int monstersLength = monsters.length; //반복 전 몬스터마리 수 체크
     while (character.health > 0 && monsterCount < monstersLength) {
       //게임 종료 조건과 반대(캐릭터의 체력이 0초과, 몬스터가 남아있는경우)
       Monster monster = getRandomMonster();
-      print('새로운 몬스터 ${monster.name}이(가) 등장했습니다.');
+      print('\n새로운 몬스터 ${monster.name}이(가) 등장했습니다.');
+      monster.showStatus(); // 몬스터 스탯 출력
+      print('---------------------------------');
 
       battle(monster); //몬스터와 대결
 
@@ -217,7 +237,8 @@ class Game {
 
   void battle(Monster monster) {
     while (character.health > 0 && monster.health > 0) {
-      print('1. 공격 2. 방어 3. 아이템 사용');
+      print('\n===== ${character.name}의 턴 =====');
+      print('행동을 선택하세요 (1: 공격, 2: 방어, 3: 아이템 사용)');
       String? input = stdin.readLineSync(); //공격 방어 사용자 입력
 
       if (input == '1') {
@@ -226,14 +247,22 @@ class Game {
         character.defend(monster);
       } else if (input == '3') {
         character.useItem();
+        if (character.itemUsed) {
+          continue; // 아이템을 사용한 경우 턴 진행
+        } else {
+          // 아이템 사용이 거부된 경우 (이미 사용함), 턴 유지
+          continue;
+        }
       } else {
         print('해당 입력은 등록되지않았습니다. 다시 입력해주세요.');
         continue; //1,2 외 입력시 다시 입력
       }
+      print('\n===== ${monster.name}의 턴 =====');
       monster.increaseDefense(); //몬스터 방어력 증가
       monster.attackCharacter(character); //캐릭터 때리기
 
       //공격,방어 후 상태창 출력
+      print('\n--- 현재 상태 ---');
       character.showStatus(); //캐릭터 상태창
       monster.showStatus(); //몬스터 상태창
     }
