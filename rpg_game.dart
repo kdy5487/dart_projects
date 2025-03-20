@@ -1,21 +1,3 @@
-/*
-파일로부터 데이터 읽어오기
-  캐릭터 데이터
-  몬스터 데이터
-사용자 입력 받기
-
-게임 종료 후 결과 파일에 저장하기
-*/
-
-/*
-1. game클래스
-2. 캐릭터 클래스
-3. 몬스터 클래스 
-각 클래스 별 메서드 구현
-*/
-
-// main 함수
-
 import 'dart:io';
 import 'dart:math';
 
@@ -88,16 +70,18 @@ String getCharacterName() {
 class Character {
   String name;
   int health;
-
   int attack;
   int armor;
+
+  int lives; //목숨 추가
 
   bool itemUsed = false; // 아이템 사용 여부
 
   int originalAttack; // 아이템 사용후 원래 공격력으로 돌아가기위함.
 
   Character(this.name, this.health, this.attack, this.armor)
-    : originalAttack = attack; //생성자에 원래 공격력 저장함.
+    : originalAttack = attack,
+      lives = 1; //생성자에 원래 공격력 저장함.
 
   void attackMonster(Monster monster) {
     //공격 매서드
@@ -110,6 +94,24 @@ class Character {
       attack = originalAttack; //아이템 효과가 끝나면 원래 공격력으로 복구
       print('아이템 효과가 끝났습니다. 공격력이 원래대로 돌아왔습니다: $attack');
     }
+  }
+
+  void gambleAttackMonster(Monster monster) {
+    Random random = Random();
+    double chance = random.nextDouble();
+    int damage = attack;
+
+    if (chance < 0.25) {
+      damage *= 3; //25퍼 확률로 대미지 3배
+      print('도박 대성공! 강력한 공격으로 $damage의 피해를 줍니다.');
+    } else if (chance < 0.5) {
+      damage *= 2; //25퍼 대미지 2배
+      print('도박 성공! $damage의 피해를 줍니다.');
+    } else {
+      health -= damage; //25퍼 자해대미지
+      print('도박 실패! $damage의 피해를 받습니다.');
+    }
+    monster.health -= damage;
   }
 
   void defend(Monster monster) {
@@ -157,9 +159,9 @@ class Monster {
 
   void attackCharacter(Character character) {
     //공격 메서드
-    maxAttack = max(Random().nextInt(maxAttack) + 1, character.armor);
+    int attack = max(Random().nextInt(maxAttack) + 1, character.armor);
     //몬스터 공격력과 캐릭터 방어력 중 높은 값
-    int damage = max(maxAttack - character.armor, 1); //최소 데미지 1 보장.
+    int damage = max(attack - character.armor, 1); //최소 데미지 1 보장.
 
     character.health = max(0, character.health - damage); //체력이 0미만으로 되지않기위함,
     print('$name이 ${character.name}에게 $damage의 피해를 입혔습니다');
@@ -213,10 +215,15 @@ class Game {
         break; //승리해서 게임종료
       }
 
-      if (character.health <= 0) {
+      if (character.health <= 0 && character.lives == 0) {
         //체력 0 이하시 게임 종료
-        print('당신은 죽었습니다.'); //패배멘트
+        print('당신은 죽었습니다. 남아있는 코인이 없습니다. 게임 오버!'); //패배멘트
         break; //죽어서 게임종료
+      } else if (character.health <= 0 && character.lives > 0) {
+        //죽었지만, 목숨이 남아있을 때
+        character.lives--; //목숨 차감
+        print('\n${character.name}이(가) 쓰러졌습니다. 코인을 사용하여 재도전합니다.');
+        main(); //게임 다시시작
       }
       // 다음 전투 여부 확인
       print("\n다음 몬스터와 대결하시겠습니까? (y/n)");
@@ -238,7 +245,7 @@ class Game {
   void battle(Monster monster) {
     while (character.health > 0 && monster.health > 0) {
       print('\n===== ${character.name}의 턴 =====');
-      print('행동을 선택하세요 (1: 공격, 2: 방어, 3: 아이템 사용)');
+      print('행동을 선택하세요 (1: 공격, 2: 방어, 3: 아이템 사용 4. 럭키펀치)');
       String? input = stdin.readLineSync(); //공격 방어 사용자 입력
 
       if (input == '1') {
@@ -253,6 +260,8 @@ class Game {
           // 아이템 사용이 거부된 경우 (이미 사용함), 턴 유지
           continue;
         }
+      } else if (input == '4') {
+        character.gambleAttackMonster(monster);
       } else {
         print('해당 입력은 등록되지않았습니다. 다시 입력해주세요.');
         continue; //1,2 외 입력시 다시 입력
