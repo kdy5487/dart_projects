@@ -43,16 +43,16 @@ List<Monster> loadMonstersStats() {
   List<Monster> monsters = [];
   try {
     final file = File('monsters.txt');
-    final lines = file.readAsLinesSync();
+    List<String> lines = file.readAsLinesSync();
 
-    for (var line in lines) {
-      final stats = line.split(',');
+    for (String line in lines) {
+      List<String> data = line.split(',');
 
-      if (stats.length != 3) continue;
+      if (data.length != 3) continue;
 
-      String name = stats[0];
-      int health = int.parse(stats[1]);
-      int maxAttack = int.parse(stats[2]);
+      String name = data[0];
+      int health = int.parse(data[1]);
+      int maxAttack = int.parse(data[2]);
       int armor = 0;
 
       monsters.add(Monster(name, health, maxAttack, armor));
@@ -70,12 +70,13 @@ String getCharacterName() {
     //리턴낼 때까지 반복
 
     print('캐릭터의 이름을 입력하세요');
-    String? name = stdin.readLineSync(); //사용자의 입력을 받아 name으로
-    if (name == null) {
+    String? name = stdin.readLineSync()?.trim(); //사용자의 입력을 받아 name으로
+    if (name == null || name.isEmpty) {
       //null값일시에(공백)
       print('이름을 다시 입력하세요');
       continue; //공백아닐 때 까지 다시 반복
-    } else if (!RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(name)) {
+    }
+    if (!RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(name)) {
       //정규표현식으로 특수문자와 숫자 포함하지않게함.
       print('이름에는 숫자나 특수문자를 포함할 수 없습니다');
       continue; //숫자나 특수문자 포함안할떄까지 반복
@@ -89,9 +90,9 @@ class Character {
   int health;
 
   int attack;
-  int aromr;
+  int armor;
 
-  Character(this.name, this.health, this.attack, this.aromr);
+  Character(this.name, this.health, this.attack, this.armor);
 
   void attackMonster(Monster monster) {
     //공격 매서드
@@ -100,17 +101,17 @@ class Character {
     print('$name이 ${monster.name}에게 $damage의 피해를 입혔습니다.');
   }
 
-  void defend() {
+  void defend(Monster monster) {
     //방어 메서드
     //몬스터가 입힌 대미지만큼 회복
-    int heal = 0; //몬스터대미지 함수에서 추후 작성
+    int heal = monster.maxAttack;
     health += heal;
     print('$name이 방어에 성공하여 $heal만큼 회복되었습니다.');
   }
 
   void showStatus() {
     //상태를 출력하는 메서드(이름 - 체력,공격력,방어력)
-    print('$name - 체력: $health, 공격력: $attack, 방어력: $aromr');
+    print('$name - 체력: $health, 공격력: $attack, 방어력: $armor');
   }
 }
 
@@ -118,17 +119,21 @@ class Monster {
   //몬스터 속성
   String name;
   int health;
-  int
-  maxAttack; //몬스터의 공격력은 캐릭터의 방어력보다 작을 수 없음. 랜덤으로 지정하여 캐릭터의 방어력과 랜덤 값 중 최댓값으로 설정.
+  int maxAttack;
+  //몬스터의 공격력은 캐릭터의 방어력보다 작을 수 없음. 랜덤으로 지정하여 캐릭터의 방어력과 랜덤 값 중 최댓값으로 설정.
   int aromr = 0; //몬스터 방어력 = 0
 
   Monster(this.name, this.health, this.maxAttack, this.aromr);
+  @override
+  String toString() {
+    return name;
+  }
 
   void attackCharacter(Character character) {
     //공격 메서드
-    maxAttack = max(Random().nextInt(maxAttack), character.aromr);
+    maxAttack = max(Random().nextInt(maxAttack), character.armor);
     //몬스터 공격력과 캐릭터 방어력 중 높은 값
-    int damage = max(maxAttack - character.aromr, 0);
+    int damage = max(maxAttack - character.armor, 0);
     character.health -= damage;
     print('$name이 ${character.name}에게 $damage의 피해를 입혔습니다');
   }
@@ -152,20 +157,21 @@ class Game {
   void startGame() {
     print('게임을 시작합니다!');
     //몬스터 등장 반복
-    while (character.health > 0 && monsterCount < monsters.length) {
+    int monstersLength = monsters.length; //반복 전 몬스터마리 수 체크
+    while (character.health > 0 && monsterCount < monstersLength) {
       //게임 종료 조건과 반대(캐릭터의 체력이 0초과, 몬스터가 남아있는경우)
       Monster monster = getRandomMonster();
-      print('새로운 몬스터 $monsters.name이(가) 등장했습니다.');
+      print('새로운 몬스터 ${monster.name}이(가) 등장했습니다.');
 
       battle(monster); //몬스터와 대결
 
-      if (monsterCount == monsters.length) {
+      if (monsterCount == monstersLength) {
         //대결이 끝날 떄 몬스터를 다 잡을시 승리
         print('축하합니다. 모든 몬스터를 물리쳤습니다!'); //승리멘트
         break; //승리해서 게임종료
       }
 
-      if (character.health > 0) {
+      if (character.health <= 0) {
         //체력 0 이하시 게임 종료
         print('당신은 죽었습니다.'); //패배멘트
         break; //죽어서 게임종료
@@ -183,6 +189,10 @@ class Game {
     }
   }
 
+  Monster getRandomMonster() {
+    return monsters[Random().nextInt(monsters.length)];
+  }
+
   void battle(Monster monster) {
     while (character.health > 0 && monster.health > 0) {
       print('1. 공격 2. 방어');
@@ -191,7 +201,7 @@ class Game {
       if (input == '1') {
         character.attackMonster(monster);
       } else if (input == '2') {
-        character.defend();
+        character.defend(monster);
       } else {
         print('해당 입력은 등록되지않았습니다. 다시 입력해주세요.');
         continue; //1,2 외 입력시 다시 입력
@@ -207,10 +217,6 @@ class Game {
       monsterCount++; //잡은몬스터 카운팅
       monsters.remove(monster); // 처치한 몬스터 제거
     }
-  }
-
-  Monster getRandomMonster() {
-    return monsters[Random().nextInt(monsters.length)];
   }
 }
 
