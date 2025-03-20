@@ -220,8 +220,17 @@ class Game {
   }
 }
 
+//30% 확률로 체력 보너스 부여
+void applyHealthBonus(Character character) {
+  if (Random().nextDouble() < 0.3) {
+    character.health += 10;
+    print('보너스 체력을 얻었습니다! 현재 체력: ${character.health}');
+  }
+}
+
 void main() {
   Character player = loadCharacterStats();
+  applyHealthBonus(player); // 30% 확률로 체력 보너스
   List<Monster> monsterList = loadMonstersStats();
 
   if (monsterList.isEmpty) {
