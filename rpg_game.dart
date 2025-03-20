@@ -222,7 +222,7 @@ class Game {
       } else if (character.health <= 0 && character.lives > 0) {
         //죽었지만, 목숨이 남아있을 때
         character.lives--; //목숨 차감
-        print('\n${character.name}이(가) 쓰러졌습니다. 코인을 사용하여 재도전합니다.');
+        print('\n${character.name}이(가) 쓰러졌습니다. 코인을 사용하여 재도전합니다.\n');
         main(); //게임 다시시작
       }
       // 다음 전투 여부 확인
