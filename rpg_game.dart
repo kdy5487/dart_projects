@@ -92,11 +92,12 @@ class Character {
   int attack;
   int armor;
 
+  bool itemUsed = false; // 아이템 사용 여부
   Character(this.name, this.health, this.attack, this.armor);
 
   void attackMonster(Monster monster) {
     //공격 매서드
-    int damage = max(attack - monster.aromr, 0); //캐릭터가 입히는 대미지== 공격력-몬스터방어력(0)
+    int damage = max(attack - monster.armor, 0); //캐릭터가 입히는 대미지== 공격력-몬스터방어력(0)
     monster.health -= damage;
     print('$name이 ${monster.name}에게 $damage의 피해를 입혔습니다.');
   }
@@ -113,6 +114,18 @@ class Character {
     //상태를 출력하는 메서드(이름 - 체력,공격력,방어력)
     print('$name - 체력: $health, 공격력: $attack, 방어력: $armor');
   }
+
+  //전투 시 캐릭터의 아이템 사용 기능 추가
+  void useItem() {
+    if (!itemUsed) {
+      //아이템 사용안했다면
+      attack *= 2;
+      print('특수 아이템을 사용했습니다. 이번 턴 공격력 증가: $attack');
+      itemUsed = true; //한번사용시 사용불가능으로
+    } else {
+      print('이미 아이템을 사용했습니다!');
+    }
+  }
 }
 
 class Monster {
@@ -121,9 +134,10 @@ class Monster {
   int health;
   int maxAttack;
   //몬스터의 공격력은 캐릭터의 방어력보다 작을 수 없음. 랜덤으로 지정하여 캐릭터의 방어력과 랜덤 값 중 최댓값으로 설정.
-  int aromr = 0; //몬스터 방어력 = 0
+  int armor; //몬스터 방어력 = 0 >> 3턴마다 2씩 증가하게
+  int trunCounter = 0; //방어력이 증가하였는지 확인할 카운터 변수
 
-  Monster(this.name, this.health, this.maxAttack, this.aromr);
+  Monster(this.name, this.health, this.maxAttack, this.armor);
   @override
   String toString() {
     return name;
@@ -140,7 +154,15 @@ class Monster {
 
   void showStatus() {
     //상태를 출력하는 메서드(이름 - 체력,공격력)
-    print('$name - 체력: $health, 공격력: $maxAttack');
+    print('$name - 체력: $health, 공격력: $maxAttack, 방어력: $armor');
+  }
+
+  void increaseDefense() {
+    if (++trunCounter % 3 == 0) {
+      //3턴마다 턴카운터 증가
+      armor += 2; // 아머는 2씩 증가
+      print('$name의 방어력이 증가했습니다! 현재 방어력: $armor');
+    }
   }
 }
 
@@ -195,17 +217,22 @@ class Game {
 
   void battle(Monster monster) {
     while (character.health > 0 && monster.health > 0) {
-      print('1. 공격 2. 방어');
+      print('1. 공격 2. 방어 3. 아이템 사용');
       String? input = stdin.readLineSync(); //공격 방어 사용자 입력
 
       if (input == '1') {
         character.attackMonster(monster);
       } else if (input == '2') {
         character.defend(monster);
+      } else if (input == '3') {
+        character.useItem();
       } else {
         print('해당 입력은 등록되지않았습니다. 다시 입력해주세요.');
         continue; //1,2 외 입력시 다시 입력
       }
+      monster.increaseDefense(); //몬스터 방어력 증가
+      monster.attackCharacter(character); //캐릭터 때리기
+
       //공격,방어 후 상태창 출력
       character.showStatus(); //캐릭터 상태창
       monster.showStatus(); //몬스터 상태창
@@ -231,6 +258,7 @@ void applyHealthBonus(Character character) {
 void main() {
   Character player = loadCharacterStats();
   applyHealthBonus(player); // 30% 확률로 체력 보너스
+
   List<Monster> monsterList = loadMonstersStats();
 
   if (monsterList.isEmpty) {
