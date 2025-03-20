@@ -38,7 +38,24 @@ void loadCharacterStats() {
 }
 
 //캐릭터 이름 입력받기
-String getCharacterName() {}
+String getCharacterName() {
+  while (true) {
+    //리턴낼 때까지 반복
+
+    print('캐릭터의 이름을 입력하세요');
+    String? name = stdin.readLineSync(); //사용자의 입력을 받아 name으로
+    if (name == null) {
+      //null값일시에(공백)
+      print('이름을 다시 입력하세요');
+      continue; //공백아닐 때 까지 다시 반복
+    } else if (!RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(name)) {
+      //정규표현식으로 특수문자와 숫자 포함하지않게함.
+      print('이름에는 숫자나 특수문자를 포함할 수 없습니다');
+      continue; //숫자나 특수문자 포함안할떄까지 반복
+    }
+    return name;
+  }
+}
 
 // 몬스터 데이터를 로드하는 함수
 List<Monster> loadMonsters() {
