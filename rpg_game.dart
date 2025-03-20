@@ -17,6 +17,7 @@
 // main 함수
 
 import 'dart:io';
+import 'dart:math';
 
 void loadCharacterStats() {
   try {
@@ -83,25 +84,6 @@ List<Monster> loadMonsters() {
   return monsters;
 }
 
-//게임 클래스 정의
-class Game {
-  //속성 정의
-  String Character; //캐릭터
-  List<Monster> monster = []; //몬스터
-  int monsterCount; //물리친 몬스터 개수
-
-  Game(this.Character, this.monster, this.monsterCount); //매개변수 생성자, this 필수
-
-  //반복문을 사용하여 몬스터를 랜덤으로 뽑아 순회하면서 대결
-  void startGame() {
-    print('게임을 시작합니다!');
-    //캐릭터이름 - 체력 공격력 방어력  출
-  }
-
-  void battle() {}
-  void getRandomMonster() {}
-}
-
 class Character {
   String name;
   int health;
@@ -113,13 +95,22 @@ class Character {
 
   void attackMonster(Monster monster) {
     //공격 매서드
+    int damage = max(attack - monster.aromr, 0); //캐릭터가 입히는 대미지== 공격력-몬스터방어력(0)
+    monster.health -= damage;
+    print('$name이 ${monster.name}에게 $damage의 피해를 입혔습니다.');
   }
 
   void defend() {
     //방어 메서드
+    //몬스터가 입힌 대미지만큼 회복
+    int heal = 0; //몬스터대미지 함수에서 추후 작성
+    health += heal;
+    print('$name이 방어에 성공하여 $heal만큼 회복되었습니다.');
   }
+
   void showStatus() {
-    //상태를 출력하는 메서드
+    //상태를 출력하는 메서드(이름 - 체력,공격력,방어력)
+    print('$name - 체력: $health, 공격력: $attack, 방어력: $aromr');
   }
 }
 
@@ -138,6 +129,25 @@ class Monster {
   void showStatus() {
     //상태를 출력하는 메서드
   }
+}
+
+//게임 클래스 정의
+class Game {
+  //속성 정의
+  String Character; //캐릭터
+  List<Monster> monster = []; //몬스터
+  int monsterCount; //물리친 몬스터 개수
+
+  Game(this.Character, this.monster, this.monsterCount); //매개변수 생성자, this 필수
+
+  //반복문을 사용하여 몬스터를 랜덤으로 뽑아 순회하면서 대결
+  void startGame() {
+    print('게임을 시작합니다!');
+    //캐릭터이름 - 체력 공격력 방어력  출
+  }
+
+  void battle() {}
+  void getRandomMonster() {}
 }
 
 void main() {}
