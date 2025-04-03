@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+//캐릭터 데이터 로드
 Character loadCharacterStats() {
   try {
     final file = File('characters.txt');
@@ -15,7 +16,7 @@ Character loadCharacterStats() {
     String name = getCharacterName();
     return Character(name, health, attack, defense);
   } catch (e) {
-    print('캐릭터 데이터를 불러오는 데 실패했습니다: $e');
+    print('캐릭터 데이터를 불러오는 데 실패했습니다dd: $e');
     exit(1);
   }
 }
